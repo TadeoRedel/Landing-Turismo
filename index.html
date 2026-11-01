@@ -161,21 +161,14 @@
     letter-spacing: -.01em;
     white-space: nowrap;
   }
-  .brand-mark {
-    position: relative;
+  .nav-brand-img {
+    display: block;
     flex: none;
-    width: 26px; height: 26px;
-    border-radius: 50%;
-    background: var(--blue);
-  }
-  .brand-mark::after {
-    content: '';
-    position: absolute;
-    top: -1px; right: -1px;
-    width: 9px; height: 9px;
-    border-radius: 50%;
-    background: var(--lemon);
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, .9);
+    height: 32px;
+    width: auto;
+    object-fit: contain;
+    border-radius: 10px;
+    transition: background-color .45s var(--ease-out), box-shadow .45s var(--ease-out);
   }
 
   .nav-links { display: flex; gap: 2px; }
@@ -237,8 +230,10 @@
     .nav-links { display: none; }
     .nav { padding-left: 14px; }
   }
-  @media (max-width: 440px) {
+  @media (max-width: 360px) {
     .brand-name { display: none; }
+  }
+  @media (max-width: 440px) {
     .nav { padding-left: 8px; }
   }
 
@@ -433,6 +428,7 @@
   }
   .nav.is-dark .nav-links a:hover { background: rgba(255, 255, 255, .08); }
   .nav.is-dark .nav-links a.is-active { background: rgba(0, 178, 227, .16); color: var(--cyan); }
+  .nav.is-dark .nav-brand-img { background: rgba(255, 255, 255, .95); box-shadow: 0 0 0 4px rgba(255, 255, 255, .95); }
   .nav.is-dark .btn { background: var(--white); color: var(--navy); }
   .nav.is-dark .btn:hover { background: var(--cyan); }
 
@@ -648,101 +644,151 @@
   }
   .js [data-rise].is-in { opacity: 1; transform: none; }
 
-  /* ----------------------------------------------------------
-     PUESTOS · bento de 4 tarjetas
-     ---------------------------------------------------------- */
-  .puestos-grid {
-    display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    gap: clamp(12px, 1.6vw, 20px);
-    margin-top: clamp(40px, 7vh, 80px);
+  /* ==========================================================
+     PUESTOS · carrusel 3D cilíndrico (Coverflow)
+     Sección navy: continúa el panel oscuro del organigrama. El JS
+     calcula rotateY / translateX / translateZ / scale / opacity
+     de cada tarjeta según su distancia cíclica a la activa.
+     ========================================================== */
+  #puestos {
+    position: relative;
+    z-index: 5;
+    padding-block: 0 clamp(96px, 16vh, 190px);
+    background: var(--navy);
+    color: var(--white);
+    overflow: hidden;
+    overflow: clip;            /* contiene el aura y las tarjetas laterales */
   }
 
-  .pcard {
+  .cf-head {
     position: relative;
+    padding: clamp(40px, 7vh, 72px) clamp(16px, 2vw, 28px) clamp(8px, 2vh, 24px);
+    border-top: 1px solid var(--hair);
+  }
+
+  .cf {
+    --cf-w: min(330px, 78vw);
+    --cf-pad: clamp(28px, 5vh, 56px);
+    position: relative;
+  }
+
+  .cf-view {
+    position: relative;
+    height: calc(var(--cf-h, 620px) + var(--cf-pad) * 2);
+  }
+
+  /* Backlight Aura: celeste institucional centrado detrás de la tarjeta activa */
+  .cf-aura {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: min(820px, 110vw);
+    height: min(560px, 100%);
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(0, 178, 227, .95) 0%, rgba(0, 178, 227, .45) 45%, rgba(0, 178, 227, 0) 100%);
+    filter: blur(56px);
+    pointer-events: none;
+    animation: cfBreath 7s ease-in-out infinite;
+  }
+  @keyframes cfBreath {
+    0%, 100% { opacity: .72; transform: translate(-50%, -50%) scale(.96); }
+    50%      { opacity: 1;   transform: translate(-50%, -50%) scale(1.05); }
+  }
+
+  /* Escenario 3D */
+  .cf-stage {
+    position: absolute;
+    inset: 0;
+    perspective: 1200px;
+    perspective-origin: 50% 50%;
+    transform-style: preserve-3d;
+    touch-action: pan-y;
+    user-select: none;
+    -webkit-user-select: none;
+    outline-offset: -4px;
+    border-radius: 24px;
+  }
+  .cf-stage:focus-visible { outline: 1px solid rgba(0, 178, 227, .4); }
+
+  .cf-card {
+    position: absolute;
+    top: var(--cf-pad);
+    left: 0; right: 0;
+    margin-inline: auto;
+    width: var(--cf-w);
+    height: var(--cf-h, auto);
     display: flex;
     flex-direction: column;
-    gap: 18px;
-    padding: clamp(22px, 2.6vw, 36px);
-    border: 1px solid rgba(10, 25, 47, .10);
-    border-radius: 24px;
-    background: var(--white);
+    gap: 14px;
+    padding: clamp(18px, 2vw, 26px);
+    border: 1px solid rgba(255, 255, 255, .14);
+    border-radius: 26px;
+    background: linear-gradient(165deg, #13304F 0%, #0D2340 52%, #0A192F 100%);
+    box-shadow: 0 30px 70px -30px rgba(0, 0, 0, .75);
+    cursor: pointer;
+    will-change: transform, opacity;
     transition:
-      border-color .4s var(--ease-out),
-      box-shadow .4s var(--ease-out);
+      transform .45s cubic-bezier(.16, 1, .3, 1),
+      opacity .45s ease,
+      border-color .45s ease,
+      box-shadow .45s ease;
   }
-  .pcard:hover {
-    border-color: rgba(0, 178, 227, .65);
-    box-shadow: 0 22px 54px -28px rgba(0, 95, 168, .38);
+  .cf-card.is-active {
+    cursor: default;
+    border-color: rgba(0, 178, 227, .75);
+    box-shadow:
+      0 0 0 1px rgba(0, 178, 227, .28),
+      0 40px 90px -34px rgba(0, 178, 227, .55);
   }
 
-  .p-1 {
-    grid-column: 1 / span 6;
-    grid-row: 1 / span 2;
-    background: linear-gradient(160deg, #F1F8FC, var(--white) 70%);
-  }
-  .p-2 { grid-column: 7 / span 6; }
-  .p-3 { grid-column: 7 / span 3; }
-  .p-4 { grid-column: 10 / span 3; }
-
-  .rank {
-    display: inline-flex;
+  .cf-top {
+    display: flex;
     align-items: center;
     gap: 10px;
-    font-size: .75rem;
+    font-size: .6875rem;
     font-weight: 600;
-    letter-spacing: .12em;
+    letter-spacing: .14em;
     text-transform: uppercase;
-    color: var(--ink-soft);
+    color: var(--cyan);
   }
-  .rank::before {
-    content: '';
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--lemon);
-  }
+  .cf-dotmark { width: 8px; height: 8px; border-radius: 50%; background: var(--lemon); }
 
-  .pcard-title {
-    font-size: clamp(1.25rem, 1.9vw, 1.75rem);
+  .cf-title {
+    font-size: clamp(1.15rem, 1.6vw, 1.4rem);
     line-height: 1.12;
     letter-spacing: -.03em;
     font-weight: 600;
-  }
-  .p-1 .pcard-title {
-    font-size: clamp(1.8rem, 3.2vw, 3rem);
-    letter-spacing: -.04em;
-    line-height: 1.05;
+    text-wrap: balance;
   }
 
-  .pcard-mission {
-    font-size: 1rem;
-    line-height: 1.55;
-    color: var(--ink-soft);
-  }
-  .p-1 .pcard-mission { font-size: clamp(1.0625rem, 1.4vw, 1.25rem); max-width: 30ch; }
-
-  .pcard-skills { margin-top: auto; padding-top: 10px; }
-  .skills-label {
-    margin-bottom: 10px;
-    font-size: .75rem;
+  .cf-label {
+    margin-bottom: 8px;
+    font-size: .6875rem;
     font-weight: 600;
-    letter-spacing: .12em;
+    letter-spacing: .14em;
     text-transform: uppercase;
-    color: var(--ink-soft);
+    color: var(--ghost);
   }
-  .skills { display: flex; flex-wrap: wrap; gap: 8px; }
-  .skill {
+  .cf-text {
+    font-size: .875rem;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, .8);
+  }
+
+  .cf-chips, .fm-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .cf-chips li, .fm-chips li {
     display: inline-flex;
     align-items: center;
     gap: 8px;
     padding: 7px 13px;
-    border: 1px solid rgba(10, 25, 47, .14);
+    border: 1px solid rgba(255, 255, 255, .2);
     border-radius: 999px;
     font-size: .8125rem;
     font-weight: 500;
     line-height: 1.2;
+    color: var(--white);
   }
-  .skill::before {
+  .cf-chips li::before, .fm-chips li::before {
     content: '';
     flex: none;
     width: 6px; height: 6px;
@@ -750,14 +796,257 @@
     background: var(--cyan);
   }
 
-  @media (max-width: 1000px) {
-    .p-1 { grid-column: 1 / -1; grid-row: auto; }
-    .p-2 { grid-column: 1 / -1; }
-    .p-3 { grid-column: 1 / span 6; }
-    .p-4 { grid-column: 7 / span 6; }
+
+  .cf-cta {
+    margin-top: auto;
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 18px 11px 15px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--white);
+    color: var(--navy);
+    font: inherit;
+    font-size: .875rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color .35s var(--ease-out), opacity .35s ease;
   }
+  .cf-cta .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--lemon); transition: transform .35s var(--ease-out), box-shadow .35s var(--ease-out); }
+  .cf-cta:hover { background: var(--cyan); }
+  .cf-cta:hover .dot { transform: scale(1.35); box-shadow: 0 0 0 5px rgba(255, 209, 0, .3); }
+  .cf-card:not(.is-active) .cf-cta { opacity: 0; pointer-events: none; }
+
+  /* Controles: anterior / siguiente + dots y contador 01 / 04 */
+  .cf-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(14px, 3vw, 32px);
+    margin-top: clamp(4px, 1.5vh, 16px);
+  }
+  .cf-arrow {
+    display: grid;
+    place-items: center;
+    width: 48px; height: 48px;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, .24);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .04);
+    color: var(--white);
+    cursor: pointer;
+    transition: background-color .35s var(--ease-out), border-color .35s var(--ease-out), color .35s var(--ease-out), transform .35s var(--ease-out);
+  }
+  .cf-arrow svg { width: 20px; height: 20px; }
+  .cf-arrow:hover { background: var(--cyan); border-color: var(--cyan); color: var(--navy); }
+  .cf-arrow:active { transform: scale(.94); }
+
+  .cf-meta { display: grid; justify-items: center; gap: 10px; min-width: 130px; }
+  .cf-count {
+    font-size: .875rem;
+    font-weight: 500;
+    letter-spacing: .08em;
+    font-variant-numeric: tabular-nums;
+    color: var(--ghost);
+  }
+  .cf-count b { font-weight: 600; color: var(--white); }
+  .cf-dots { display: flex; align-items: center; gap: 4px; }
+  .cf-dot {
+    position: relative;
+    width: 22px; height: 22px;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+  }
+  .cf-dot::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 8px; height: 8px;
+    margin: -4px 0 0 -4px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .3);
+    transition: width .45s var(--ease-out), margin .45s var(--ease-out), background-color .35s var(--ease-out);
+  }
+  .cf-dot:hover::before { background: rgba(255, 255, 255, .6); }
+  .cf-dot.is-on::before { width: 24px; margin-left: -12px; background: var(--cyan); }
+
+  .cf-hint {
+    margin-top: clamp(14px, 2.5vh, 24px);
+    text-align: center;
+    font-size: .8125rem;
+    letter-spacing: .02em;
+    color: var(--ghost);
+  }
+  .cf-live {
+    position: absolute;
+    width: 1px; height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* ----------------------------------------------------------
+     MODAL · ficha completa (elemento <dialog>)
+     ---------------------------------------------------------- */
+  .fm {
+    position: fixed;
+    inset: 0;
+    width: 100%; height: 100%;
+    max-width: none; max-height: none;
+    margin: 0;
+    padding: clamp(12px, 4vh, 40px) clamp(12px, 4vw, 40px);
+    border: 0;
+    background: rgba(3, 10, 22, 0);
+    color: var(--white);
+    overflow: hidden;
+    transition: background-color .3s ease, backdrop-filter .3s ease;
+  }
+  .fm[open] { display: grid; place-items: center; }
+  .fm.is-open { background: rgba(3, 10, 22, .76); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+
+  .fm-panel {
+    position: relative;
+    width: min(800px, 100%);
+    max-height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid rgba(0, 178, 227, .5);
+    border-radius: 28px;
+    background: linear-gradient(160deg, #11294A 0%, #0A192F 62%);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, .04), 0 40px 120px -30px rgba(0, 178, 227, .4);
+    opacity: 0;
+    transform: translateY(24px) scale(.97);
+    transition: opacity .3s ease, transform .45s cubic-bezier(.16, 1, .3, 1);
+  }
+  .fm.is-open .fm-panel { opacity: 1; transform: none; }
+
+  .fm-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: clamp(26px, 4vw, 48px);
+  }
+
+  /* Scrollbar fina del modal */
+  .fm-body::-webkit-scrollbar { width: 8px; }
+  .fm-body::-webkit-scrollbar-track { background: transparent; margin-block: 22px; }
+  .fm-body::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, .2);
+    border: 1px solid transparent;
+    background-clip: padding-box;
+    border-radius: 999px;
+  }
+  .fm-body::-webkit-scrollbar-thumb:hover { background: rgba(0, 178, 227, .55); background-clip: padding-box; }
+  @supports not selector(::-webkit-scrollbar) {            /* Firefox */
+    .fm-body { scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, .22) transparent; }
+  }
+
+  /* Botón cerrar: minimalista, anclado arriba a la derecha */
+  .fm-close {
+    position: absolute;
+    top: 14px; right: 14px;
+    z-index: 3;
+    display: grid;
+    place-items: center;
+    width: 40px; height: 40px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(22, 48, 84, .88);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    color: var(--white);
+    cursor: pointer;
+    transition: background-color .3s var(--ease-out), color .3s var(--ease-out), transform .45s var(--ease-out);
+  }
+  .fm-close svg { width: 16px; height: 16px; }
+  .fm-close:hover { background: var(--cyan); color: var(--navy); transform: rotate(90deg); }
+
+  .fm-kicker {
+    padding-right: 56px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    font-size: .75rem;
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--cyan);
+  }
+  .fm-kicker .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--lemon); }
+  .fm-title {
+    max-width: 18em;
+    margin-bottom: clamp(24px, 4vh, 36px);
+    font-size: clamp(1.6rem, 3.4vw, 2.5rem);
+    line-height: 1.06;
+    letter-spacing: -.035em;
+    font-weight: 600;
+    text-wrap: balance;
+  }
+  .fm-h {
+    margin: 0 0 12px;
+    font-size: .6875rem;
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ghost);
+  }
+  .fm-sec + .fm-sec { margin-top: 0; }
+  .fm-list { display: grid; gap: 12px; }
+  .fm-list li {
+    position: relative;
+    padding-left: 22px;
+    font-size: .9688rem;
+    line-height: 1.55;
+    color: rgba(255, 255, 255, .86);
+  }
+  .fm-list li::before {
+    content: '';
+    position: absolute;
+    left: 0; top: .6em;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--cyan);
+  }
+  .fm-chips { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  .fm-chips li { display: flex; width: 100%; padding: 10px 16px; }
+  .fm-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 1px;
+    margin: clamp(24px, 4vh, 36px) 0;
+    border: 1px solid var(--hair);
+    border-radius: 18px;
+    background: var(--hair);
+    overflow: hidden;
+  }
+  .fm-meta > div { padding: 16px 18px; background: #0C2038; }
+  .fm-meta dt {
+    margin-bottom: 6px;
+    font-size: .6875rem;
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ghost);
+  }
+  .fm-meta dd { margin: 0; font-size: .9375rem; line-height: 1.4; font-weight: 500; }
+  .fm-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: clamp(20px, 3vw, 32px); }
+
+  html.cf-lock { overflow: hidden; }
+
   @media (max-width: 640px) {
-    .p-3, .p-4 { grid-column: 1 / -1; }
+    .cf-arrow { width: 44px; height: 44px; }
+    .cf-meta { min-width: 112px; }
+    .fm-panel { border-radius: 22px; }
   }
 
   /* ----------------------------------------------------------
@@ -1063,6 +1352,8 @@
     .nav { animation: none; }
     .scroll-cue .line { animation: none; }
     .split-chars .c, .split-words .wd, .js [data-fade], .js [data-rise], .js .org-figure, .cal-panel, .cal-panel-inner, .cal-body, .cal-ic { transition: none !important; }
+    .cf-card, .cf-dot::before, .cf-arrow, .cf-cta, .fm, .fm-panel, .fm-close { transition: none !important; }
+    .cf-aura { animation: none; }
   }
 </style>
 </head>
@@ -1078,7 +1369,7 @@
   <!-- NAVBAR FLOTANTE -->
   <nav class="nav" data-glow aria-label="Principal">
     <a class="brand" href="#hero" aria-label="Tucumán Turismo, inicio">
-      <span class="brand-mark" aria-hidden="true"></span>
+      <img class="nav-brand-img" src="logo-tucuman.png" alt="Logo Tucumán Turismo" decoding="async">
       <span class="brand-name">Tucumán Turismo</span>
     </a>
 
@@ -1165,60 +1456,76 @@
       </div>
     </section>
 
-    <!-- HOJA CLARA · Puestos, Políticas y Calendario -->
-    <div class="light-zone">
+    <!-- 06 · PUESTOS · carrusel 3D (Coverflow) sobre fondo navy -->
+    <section id="puestos" aria-labelledby="puestos-title">
+      <div class="wrap">
 
-      <!-- 06 · PUESTOS -->
-      <section id="puestos" class="sec" aria-labelledby="puestos-title">
-        <div class="wrap">
-          <p class="eyebrow" data-rise>06 · Puestos</p>
-          <h2 class="sec-title" id="puestos-title" data-split="words">Cuatro puestos que <em>promueven</em> Tucumán.</h2>
+        <header class="cf-head">
+          <p class="org-eyebrow" data-scrub="dark"><span class="acc">06</span> · Puestos</p>
+          <h2 class="org-title" id="puestos-title" data-scrub="dark" data-window=".1">Cuatro puestos que <span class="acc">promueven</span> Tucumán.</h2>
+        </header>
 
-          <div class="puestos-grid">
+        <div class="cf" id="cf" role="region" aria-roledescription="carrusel" aria-label="Puestos del área de Promoción Turística">
+          <div class="cf-view" data-rise>
+            <div class="cf-aura" aria-hidden="true"></div>
+            <div class="cf-stage" id="cf-stage" tabindex="0" role="group" aria-label="Tarjetas de puestos. Usa las flechas izquierda y derecha para cambiar de puesto.">
 
-            <article class="pcard p-1" data-rise>
-              <p class="rank">N.º 1 en jerarquía</p>
-              <h3 class="pcard-title">Coordinador de Promoción y Eventos</h3>
-              <p class="pcard-mission">Detectar mercados estratégicos para captar más demanda y coordinar la presencia de la Provincia en las principales ferias nacionales e internacionales.</p>
-              <div class="pcard-skills">
-                <p class="skills-label">Competencias clave</p>
-                <ul class="skills"><li class="skill">Liderazgo</li><li class="skill">Planificación de eventos</li></ul>
-              </div>
-            </article>
-
-            <article class="pcard p-2" data-rise style="--rd:90ms">
-              <p class="rank">N.º 3 en jerarquía</p>
-              <h3 class="pcard-title">Responsable de Turismo y Reuniones</h3>
-              <p class="pcard-mission">Posicionar a la Provincia como sede de eventos y acompañar a las instituciones que organizan congresos, convenciones y ferias en Tucumán.</p>
-              <div class="pcard-skills">
-                <p class="skills-label">Competencias clave</p>
-                <ul class="skills"><li class="skill">Negociación</li><li class="skill">Gestión del turismo de reuniones</li></ul>
-              </div>
-            </article>
-
-            <article class="pcard p-3" data-rise style="--rd:180ms">
-              <p class="rank">N.º 2 en jerarquía</p>
-              <h3 class="pcard-title">Responsable de Eventos Culturales y Deportivos</h3>
-              <p class="pcard-mission">Acompañar fiestas y festivales tradicionales, y armar el calendario anual de eventos culturales y deportivos de la provincia.</p>
-              <div class="pcard-skills">
-                <p class="skills-label">Competencias clave</p>
-                <ul class="skills"><li class="skill">Producción de eventos</li><li class="skill">Resolución de problemas</li></ul>
-              </div>
-            </article>
-
-            <article class="pcard p-4" data-rise style="--rd:270ms">
-              <p class="rank">N.º 4 en jerarquía</p>
-              <h3 class="pcard-title">Diseñador/a de Contenidos Gráficos y Audiovisuales</h3>
-              <p class="pcard-mission">Diseñar y producir las piezas comunicacionales del Ente: fotos, videos y spots radiales y televisivos.</p>
-              <div class="pcard-skills">
-                <p class="skills-label">Competencias clave</p>
-                <ul class="skills"><li class="skill">Diseño gráfico</li><li class="skill">Producción audiovisual</li></ul>
-              </div>
-            </article>
-
+          <article class="cf-card" id="cf-card-1" data-i="0" aria-label="Puesto 1 de 4: Coordinador de Promoción y Eventos">
+            <p class="cf-top"><span class="cf-dotmark" aria-hidden="true"></span>Puesto 1</p>
+            <h3 class="cf-title">Coordinador de Promoción y Eventos</h3>
+            <div class="cf-block">
+              <p class="cf-label">Misión</p>
+              <p class="cf-text">Su fin es colaborar en la detección de mercados estratégicos para una mayor captación de la demanda y coordinar la presencia de la Provincia en las principales ferias nacionales e internacionales.</p>
+            </div>
+            <button class="cf-cta" type="button" data-open="0" aria-haspopup="dialog"><span class="dot" aria-hidden="true"></span>Ver Ficha Completa</button>
+          </article>
+          <article class="cf-card" id="cf-card-2" data-i="1" aria-label="Puesto 2 de 4: Responsable de Turismo y Reuniones">
+            <p class="cf-top"><span class="cf-dotmark" aria-hidden="true"></span>Puesto 2</p>
+            <h3 class="cf-title">Responsable de Turismo y Reuniones</h3>
+            <div class="cf-block">
+              <p class="cf-label">Misión</p>
+              <p class="cf-text">Tiene por misión propiciar y colaborar en el posicionamiento de la Provincia como sede de eventos y colaborar con instituciones organizadoras de eventos en la organización de congresos, convenciones y ferias que elijan la Provincia como destino sede.</p>
+            </div>
+            <button class="cf-cta" type="button" data-open="1" aria-haspopup="dialog"><span class="dot" aria-hidden="true"></span>Ver Ficha Completa</button>
+          </article>
+          <article class="cf-card" id="cf-card-3" data-i="2" aria-label="Puesto 3 de 4: Responsable de Organización de Eventos Culturales y Deportivos">
+            <p class="cf-top"><span class="cf-dotmark" aria-hidden="true"></span>Puesto 3</p>
+            <h3 class="cf-title">Responsable de Organización de Eventos Culturales y Deportivos</h3>
+            <div class="cf-block">
+              <p class="cf-label">Misión</p>
+              <p class="cf-text">Su rol es colaborar en la realización de fiestas, festivales tradicionales y eventos de interés del sector turístico y conformar un calendario anual de los eventos culturales y deportivos que se realicen en la Provincia para su difusión. Asimismo, debe asesorar y asistir a organizadores de eventos de interés turístico y articular con los organismos pertinentes en el desarrollo de los mismos.</p>
+            </div>
+            <button class="cf-cta" type="button" data-open="2" aria-haspopup="dialog"><span class="dot" aria-hidden="true"></span>Ver Ficha Completa</button>
+          </article>
+          <article class="cf-card" id="cf-card-4" data-i="3" aria-label="Puesto 4 de 4: Diseñador/a de Contenidos Gráficos y Audiovisuales">
+            <p class="cf-top"><span class="cf-dotmark" aria-hidden="true"></span>Puesto 4</p>
+            <h3 class="cf-title">Diseñador/a de Contenidos Gráficos y Audiovisuales</h3>
+            <div class="cf-block">
+              <p class="cf-label">Misión</p>
+              <p class="cf-text">Su misión es diseñar y producir las piezas comunicacionales del Ente: fotos, videos, spots radiales y televisivos.</p>
+            </div>
+            <button class="cf-cta" type="button" data-open="3" aria-haspopup="dialog"><span class="dot" aria-hidden="true"></span>Ver Ficha Completa</button>
+          </article>
+            </div>
           </div>
+
+          <div class="cf-controls">
+            <button class="cf-arrow" id="cf-prev" type="button" aria-label="Puesto anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+            <div class="cf-meta">
+              <p class="cf-count" aria-hidden="true"><b id="cf-cur">01</b> / 04</p>
+              <div class="cf-dots"><button class="cf-dot" type="button" data-go="0" aria-label="Ir al puesto 1: Coordinador de Promoción y Eventos"></button><button class="cf-dot" type="button" data-go="1" aria-label="Ir al puesto 2: Responsable de Turismo y Reuniones"></button><button class="cf-dot" type="button" data-go="2" aria-label="Ir al puesto 3: Responsable de Organización de Eventos Culturales y Deportivos"></button><button class="cf-dot" type="button" data-go="3" aria-label="Ir al puesto 4: Diseñador/a de Contenidos Gráficos y Audiovisuales"></button></div>
+            </div>
+            <button class="cf-arrow" id="cf-next" type="button" aria-label="Puesto siguiente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+          </div>
+          <p class="cf-hint">Navega con las flechas del teclado, desliza o haz clic en una tarjeta lateral.</p>
+          <p class="cf-live" id="cf-live" aria-live="polite"></p>
         </div>
-      </section>
+
+      </div>
+    </section>
+
+<!-- HOJA CLARA · Políticas y Calendario -->
+    <div class="light-zone">
 
       <!-- 07 · POLÍTICAS (módulo destacado) -->
       <section id="politicas" class="sec" aria-labelledby="pol-title">
@@ -1230,7 +1537,7 @@
                 <p class="eyebrow">07 · Políticas</p>
                 <h2 class="sec-title" id="pol-title" data-split="words">Nuevas políticas de <em>compensaciones</em></h2>
               </div>
-              <p class="pol-count" aria-hidden="true"><b>08</b> políticas</p>
+              <p class="pol-count" aria-hidden="true"><b>8</b> políticas</p>
             </div>
 
             <ul class="pol-grid">
@@ -1238,7 +1545,7 @@
               <li class="pol" data-rise>
                 <div class="pol-top">
                   <span class="pol-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.7l-5.2 2.7 1-5.9L3.5 9.4l5.9-.8L12 3.2z"/></svg></span>
-                  <span class="pol-n">01</span>
+                  <span class="pol-n">1</span>
                 </div>
                 <h3 class="pol-title">Reconocimiento del desempeño</h3>
               </li>
@@ -1246,7 +1553,7 @@
               <li class="pol" data-rise style="--rd:70ms">
                 <div class="pol-top">
                   <span class="pol-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></span>
-                  <span class="pol-n">02</span>
+                  <span class="pol-n">2</span>
                 </div>
                 <h3 class="pol-title">Desarrollo profesional</h3>
               </li>
@@ -1254,7 +1561,7 @@
               <li class="pol" data-rise style="--rd:140ms">
                 <div class="pol-top">
                   <span class="pol-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.1a4.3 4.3 0 0 1 7.5 2.7C19.5 15.4 12 20 12 20z"/></svg></span>
-                  <span class="pol-n">03</span>
+                  <span class="pol-n">3</span>
                 </div>
                 <h3 class="pol-title">Bienestar laboral</h3>
               </li>
@@ -1262,7 +1569,7 @@
               <li class="pol" data-rise style="--rd:210ms">
                 <div class="pol-top">
                   <span class="pol-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="2.8"/></svg></span>
-                  <span class="pol-n">04</span>
+                  <span class="pol-n">4</span>
                 </div>
                 <h3 class="pol-title">Transparencia y equidad</h3>
               </li>
@@ -1270,7 +1577,7 @@
               <li class="pol" data-rise>
                 <div class="pol-top">
                   <span class="pol-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg></span>
-                  <span class="pol-n">05</span>
+                  <span class="pol-n">5</span>
                 </div>
                 <h3 class="pol-title">Tareas extraordinarias</h3>
               </li>
@@ -1278,7 +1585,7 @@
               <li class="pol" data-rise style="--rd:70ms">
                 <div class="pol-top">
                   <span class="pol-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="5"/><path d="M8.6 13.4L7 21l5-2.8 5 2.8-1.6-7.6"/></svg></span>
-                  <span class="pol-n">06</span>
+                  <span class="pol-n">6</span>
                 </div>
                 <h3 class="pol-title">Antigüedad y experiencia</h3>
               </li>
@@ -1286,7 +1593,7 @@
               <li class="pol" data-rise style="--rd:140ms">
                 <div class="pol-top">
                   <span class="pol-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7M7.5 8a2.5 2.5 0 1 1 0-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 1 1 0 5"/></svg></span>
-                  <span class="pol-n">07</span>
+                  <span class="pol-n">7</span>
                 </div>
                 <h3 class="pol-title">Día libre por cumpleaños</h3>
               </li>
@@ -1294,7 +1601,7 @@
               <li class="pol" data-rise style="--rd:210ms">
                 <div class="pol-top">
                   <span class="pol-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3.5" width="16" height="14" rx="3"/><path d="M4 11.5h16M8 21v-3.5M16 21v-3.5"/><circle cx="8.5" cy="14.5" r=".9"/><circle cx="15.5" cy="14.5" r=".9"/></svg></span>
-                  <span class="pol-n">08</span>
+                  <span class="pol-n">8</span>
                 </div>
                 <h3 class="pol-title">Transporte y movilidad</h3>
               </li>
@@ -1499,6 +1806,107 @@
   <footer id="site-footer">
     <div class="wrap footer-inner"><span class="dot" aria-hidden="true"></span>Ente Autárquico Tucumán Turismo</div>
   </footer>
+
+<!-- Ficha completa del puesto (se llena desde los <template>) -->
+  <dialog class="fm" id="cf-modal" aria-labelledby="cf-modal-title">
+    <div class="fm-panel">
+      <button class="fm-close" id="cf-close" type="button" aria-label="Cerrar ficha"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <div class="fm-body" id="cf-modal-body"></div>
+    </div>
+  </dialog>
+
+  <template id="cf-tpl-1">
+    <p class="fm-kicker"><span class="dot" aria-hidden="true"></span>Puesto 1 · Ficha completa</p>
+    <h3 class="fm-title" id="cf-modal-title">Coordinador de Promoción y Eventos</h3>
+    <section class="fm-sec">
+      <h4 class="fm-h">Funciones</h4>
+      <ul class="fm-list"><li>Planificar y coordinar las acciones de promoción turística y los eventos destinados a difundir los atractivos y propuestas turísticas de Tucumán.</li><li>Asesorar y asistir a los organizadores de eventos de interés turístico, brindando orientación y acompañamiento para su desarrollo.</li><li>Articular acciones con municipios, organismos públicos, instituciones y otros actores vinculados con la organización y promoción de eventos.</li><li>Gestionar la participación del Ente en ferias, festivales y actividades promocionales realizadas dentro y fuera de la provincia.</li><li>Coordinar los recursos necesarios para el desarrollo de las actividades, incluyendo materiales, espacios, equipamiento y servicios requeridos.</li><li>Realizar el seguimiento de las acciones promocionales y de los eventos, identificando resultados y aspectos que puedan mejorarse.</li></ul>
+    </section>
+    <dl class="fm-meta">
+      <div><dt>Depende de</dt><dd>Dirección de promoción turística</dd></div>
+      <div><dt>Puestos que reportan</dt><dd>Dirección de promoción turística</dd></div>
+      <div><dt>Reemplazo</dt><dd>Responsable de eventos culturales y deportivos</dd></div>
+    </dl>
+    <div class="fm-cols">
+      <section class="fm-sec">
+        <h4 class="fm-h">Competencias de gestión</h4>
+        <ul class="fm-chips"><li>Liderazgo</li><li>Planificación y organización</li><li>Orientación a resultados</li><li>Trabajo en equipo</li><li>Comunicación efectiva</li></ul>
+      </section>
+      <section class="fm-sec">
+        <h4 class="fm-h">Competencias técnicas</h4>
+        <ul class="fm-chips"><li>Planificación de eventos</li><li>Marketing turístico</li><li>Gestión de proyectos</li><li>Gestión presupuestaria</li><li>Evaluación de resultados</li></ul>
+      </section>
+    </div>
+  </template>
+  <template id="cf-tpl-2">
+    <p class="fm-kicker"><span class="dot" aria-hidden="true"></span>Puesto 2 · Ficha completa</p>
+    <h3 class="fm-title" id="cf-modal-title">Responsable de Turismo y Reuniones</h3>
+    <section class="fm-sec">
+      <h4 class="fm-h">Funciones</h4>
+      <ul class="fm-list"><li>Identificar oportunidades para atraer congresos, convenciones y encuentros profesionales a la provincia de Tucumán.</li><li>Mantener contacto con asociaciones profesionales, cámaras empresariales, universidades y entidades interesadas en realizar reuniones en la provincia.</li><li>Brindar información sobre la infraestructura disponible para congresos y convenciones, incluyendo salones, centros de reuniones, hoteles y servicios complementarios.</li><li>Relevar la disponibilidad de espacios, alojamientos, servicios gastronómicos y transporte necesarios para recibir a los participantes.</li><li>Mantener actualizada una base de datos de instituciones, organizadores, sedes y proveedores vinculados con el turismo de reuniones.</li></ul>
+    </section>
+    <dl class="fm-meta">
+      <div><dt>Depende de</dt><dd>Dirección de promoción turística</dd></div>
+      <div><dt>Puestos que reportan</dt><dd>Dirección de promoción turística</dd></div>
+      <div><dt>Reemplazo</dt><dd>Responsable de eventos culturales y deportivos</dd></div>
+    </dl>
+    <div class="fm-cols">
+      <section class="fm-sec">
+        <h4 class="fm-h">Competencias de gestión</h4>
+        <ul class="fm-chips"><li>Orientación al cliente</li><li>Comunicación efectiva</li><li>Negociación</li><li>Planificación y organización</li><li>Relaciones interpersonales</li></ul>
+      </section>
+      <section class="fm-sec">
+        <h4 class="fm-h">Competencias técnicas</h4>
+        <ul class="fm-chips"><li>Conocimiento del destino turístico</li><li>Gestión del turismo de reuniones</li><li>Organización de eventos corporativos</li><li>Elaboración de propuestas</li><li>Investigación de mercados turísticos</li></ul>
+      </section>
+    </div>
+  </template>
+  <template id="cf-tpl-3">
+    <p class="fm-kicker"><span class="dot" aria-hidden="true"></span>Puesto 3 · Ficha completa</p>
+    <h3 class="fm-title" id="cf-modal-title">Responsable de Organización de Eventos Culturales y Deportivos</h3>
+    <section class="fm-sec">
+      <h4 class="fm-h">Funciones</h4>
+      <ul class="fm-list"><li>Identificar fiestas populares, festivales tradicionales y competencias deportivas de la provincia que puedan contribuir a la promoción turística de Tucumán.</li><li>Recopilar información sobre fechas, ubicaciones, características y organizadores de los eventos culturales y deportivos.</li><li>Contactar a los organizadores para conocer las necesidades de cada evento y evaluar posibles formas de colaboración del Ente.</li><li>Realizar visitas o reuniones de coordinación con los responsables de los eventos para verificar aspectos organizativos.</li><li>Gestionar la disponibilidad de materiales promocionales y recursos necesarios para acompañar los eventos.</li></ul>
+    </section>
+    <dl class="fm-meta">
+      <div><dt>Depende de</dt><dd>Dirección de promoción turística</dd></div>
+      <div><dt>Puestos que reportan</dt><dd>Dirección de promoción turística</dd></div>
+      <div><dt>Reemplazo</dt><dd>Responsable de turismo y reuniones</dd></div>
+    </dl>
+    <div class="fm-cols">
+      <section class="fm-sec">
+        <h4 class="fm-h">Competencias de gestión</h4>
+        <ul class="fm-chips"><li>Planificación y organización</li><li>Trabajo en equipo</li><li>Resolución de problemas</li><li>Adaptabilidad</li><li>Orientación a resultados</li></ul>
+      </section>
+      <section class="fm-sec">
+        <h4 class="fm-h">Competencias técnicas</h4>
+        <ul class="fm-chips"><li>Producción de eventos</li><li>Gestión lógica</li><li>Gestión de proveedores</li><li>Gestión y riesgos de contingencias</li><li>Evaluación de eventos</li></ul>
+      </section>
+    </div>
+  </template>
+  <template id="cf-tpl-4">
+    <p class="fm-kicker"><span class="dot" aria-hidden="true"></span>Puesto 4 · Ficha completa</p>
+    <h3 class="fm-title" id="cf-modal-title">Diseñador/a de Contenidos Gráficos y Audiovisuales</h3>
+    <section class="fm-sec">
+      <h4 class="fm-h">Funciones</h4>
+      <ul class="fm-list"><li>Diseñar publicaciones gráficas para redes sociales y otros canales digitales de comunicación.</li><li>Producir y editar videos promocionales sobre destinos, experiencias turísticas, festivales y actividades de la provincia.</li><li>Trabajar en conjunto con las áreas de Promoción y Eventos y Comunicación Institucional para desarrollar contenidos acordes con las actividades programadas.</li><li>Cumplir con los plazos establecidos para la entrega de los materiales solicitados y atender las prioridades de las campañas y actividades promocionales.</li></ul>
+    </section>
+    <dl class="fm-meta">
+      <div><dt>Depende de</dt><dd>Dirección de promoción turística</dd></div>
+      <div><dt>Puestos que reportan</dt><dd>Dirección de promoción turística</dd></div>
+      <div><dt>Reemplazo</dt><dd>Coordinador de promoción y eventos</dd></div>
+    </dl>
+    <div class="fm-cols">
+      <section class="fm-sec">
+        <h4 class="fm-h">Competencias de gestión</h4>
+        <ul class="fm-chips"><li>Creatividad e innovación</li><li>Planificación y organización</li><li>Comunicación efectiva</li><li>Trabajo en equipo</li><li>Adaptabilidad</li></ul>
+      </section>
+      <section class="fm-sec">
+        <h4 class="fm-h">Competencias técnicas</h4>
+        <ul class="fm-chips"><li>Diseño gráfico</li><li>Producción audiovisual</li><li>Edición de imágenes y videos</li><li>Comunicación visual</li><li>Gestión de contenidos digitales</li></ul>
+      </section>
+    </div>
+  </template>
 
 <script>
 (() => {
@@ -1819,8 +2227,8 @@
 
     // Revelado: arranca cuando el bloque casi se fija y termina 0.25vh antes
     // de que el panel oscuro asome por abajo (la pista mide 400svh).
-    const start = vh * 0.15;
-    const end   = -(r.height - 2.25 * vh);
+    const start = vh * 0.35;
+    const end   = -vh * 0.9;
     metrics.stmt = clamp((start - r.top) / (start - end));
 
     // Inundación del glow: desde que la pista asoma hasta que el bloque queda centrado
@@ -1838,7 +2246,7 @@
   const progressOf = s => {
     if (s.pinned) return metrics.stmt;
     const top = s.el.getBoundingClientRect().top;
-    return clamp((S.vh * 0.95 - top) / (S.vh * 0.62));
+    return clamp((S.vh * 1.0 - top) / (S.vh * 0.45));
   };
 
   function updateScrubs() {
@@ -1928,6 +2336,154 @@
       });
     });
   });
+
+  // ---------------------------------------------------------------
+  // Carrusel 3D (Coverflow) de Puestos
+  // ---------------------------------------------------------------
+  const cf       = document.getElementById('cf');
+  const cfStage  = document.getElementById('cf-stage');
+  const cfCards  = [...cf.querySelectorAll('.cf-card')];
+  const cfDots   = [...cf.querySelectorAll('.cf-dot')];
+  const cfCur    = document.getElementById('cf-cur');
+  const cfLive   = document.getElementById('cf-live');
+  const CF_N     = cfCards.length;
+  const cfPrevOff = new Array(CF_N).fill(null);
+  let cfActive = 0, cfStep = 310, cfDragged = false;
+
+  // Iguala la altura de todas las tarjetas a la más alta (el texto de cada misión es distinto)
+  function cfSize() {
+    cf.style.removeProperty('--cf-h');
+    let h = 0;
+    cfCards.forEach(c => { h = Math.max(h, c.offsetHeight); });
+    cf.style.setProperty('--cf-h', Math.ceil(h) + 'px');
+    cfStep = innerWidth < 720 ? Math.round(cfCards[0].offsetWidth * 0.7) : 240;
+  }
+
+  // Matemática 3D: cada tarjeta según su distancia cíclica a la activa
+  function cfLayout() {
+    cfCards.forEach((card, i) => {
+      let d = i - cfActive;                        // offset
+      if (d >  CF_N / 2) d -= CF_N;                // distancia relativa cíclica
+      if (d < -CF_N / 2) d += CF_N;
+      const abs  = Math.abs(d);
+      const sign = Math.sign(d);
+
+      const rotY  = -sign * Math.min(abs * 26, 45);
+      const tx    = sign * (abs * cfStep);
+      const tz    = -abs * 160;
+      const scale = Math.max(0.7, 1 - abs * 0.1);
+      const op    = abs === 0 ? 1 : Math.max(0.25, 1 - abs * 0.3);
+
+      // Si la tarjeta salta de un extremo al otro (vuelta cíclica), reaparece con fundido
+      const prev = cfPrevOff[i];
+      const jump = prev !== null && Math.abs(d - prev) > 2;
+      cfPrevOff[i] = d;
+      if (jump) { card.style.transition = 'none'; card.style.opacity = '0'; }
+
+      card.style.transform = `translateX(${tx}px) translateZ(${tz}px) rotateY(${rotY}deg) scale(${scale})`;
+      card.style.zIndex = String(50 - abs * 10);
+
+      if (jump) { void card.offsetWidth; card.style.transition = ''; }
+      card.style.opacity = String(op);
+
+      const on = d === 0;
+      card.classList.toggle('is-active', on);
+      if (on) card.setAttribute('aria-current', 'true'); else card.removeAttribute('aria-current');
+      card.querySelector('.cf-cta').tabIndex = on ? 0 : -1;
+    });
+
+    cfDots.forEach((dot, i) => {
+      dot.classList.toggle('is-on', i === cfActive);
+      if (i === cfActive) dot.setAttribute('aria-current', 'true'); else dot.removeAttribute('aria-current');
+    });
+    cfCur.textContent = String(cfActive + 1).padStart(2, '0');
+    cfLive.textContent = `Puesto ${cfActive + 1} de ${CF_N}: ${cfCards[cfActive].querySelector('.cf-title').textContent}`;
+  }
+
+  const cfGo = i => { cfActive = ((i % CF_N) + CF_N) % CF_N; cfLayout(); };
+
+  document.getElementById('cf-prev').addEventListener('click', () => cfGo(cfActive - 1));
+  document.getElementById('cf-next').addEventListener('click', () => cfGo(cfActive + 1));
+  cfDots.forEach(dot => dot.addEventListener('click', () => cfGo(+dot.dataset.go)));
+
+  // Modal de la ficha completa
+  const fm      = document.getElementById('cf-modal');
+  const fmBody  = document.getElementById('cf-modal-body');
+  const fmClose = document.getElementById('cf-close');
+  let fmFocus = null, fmClosing = false;
+
+  function openFicha(i, trigger) {
+    const tpl = document.getElementById('cf-tpl-' + (i + 1));
+    if (!tpl || fm.open) return;
+    fmBody.replaceChildren(tpl.content.cloneNode(true));
+    fmFocus = trigger || document.activeElement;
+    const sbw = innerWidth - root.clientWidth;      // evita el salto de layout al ocultar el scrollbar
+    root.classList.add('cf-lock');
+    if (sbw > 0) root.style.paddingRight = sbw + 'px';
+    fm.showModal();
+    fmBody.scrollTop = 0;
+    requestAnimationFrame(() => fm.classList.add('is-open'));
+  }
+
+  function closeFicha() {
+    if (!fm.open || fmClosing) return;
+    fmClosing = true;
+    fm.classList.remove('is-open');
+    setTimeout(() => {
+      fm.close();
+      root.classList.remove('cf-lock');
+      root.style.paddingRight = '';
+      fmClosing = false;
+      if (fmFocus && fmFocus.focus) fmFocus.focus({ preventScroll: true });
+    }, reduce ? 0 : 300);
+  }
+
+  fmClose.addEventListener('click', closeFicha);
+  fm.addEventListener('cancel', ev => { ev.preventDefault(); closeFicha(); });   // Esc
+  fm.addEventListener('click', ev => { if (ev.target === fm) closeFicha(); });   // clic fuera del panel
+
+  // Clic en una tarjeta: la lateral viene al centro; el botón de la central abre la ficha
+  cfCards.forEach((card, i) => {
+    card.addEventListener('click', ev => {
+      if (cfDragged) return;
+      if (!card.classList.contains('is-active')) { cfGo(i); return; }
+      const btn = ev.target.closest('.cf-cta');
+      if (btn) openFicha(i, btn);
+    });
+  });
+
+  // Gesto de deslizar (mouse o dedo)
+  let cfX0 = null;
+  cfStage.addEventListener('pointerdown', ev => { if (ev.isPrimary) { cfX0 = ev.clientX; cfDragged = false; } });
+  const cfEnd = ev => {
+    if (cfX0 === null) return;
+    const dx = ev.clientX - cfX0;
+    cfX0 = null;
+    if (Math.abs(dx) > 45) {
+      cfDragged = true;
+      setTimeout(() => { cfDragged = false; }, 60);
+      cfGo(cfActive + (dx < 0 ? 1 : -1));
+    }
+  };
+  cfStage.addEventListener('pointerup', cfEnd);
+  cfStage.addEventListener('pointercancel', () => { cfX0 = null; });
+
+  // Teclado: flechas izquierda / derecha mientras el carrusel está a la vista
+  document.addEventListener('keydown', ev => {
+    if (ev.key !== 'ArrowLeft' && ev.key !== 'ArrowRight') return;
+    if (fm.open || ev.altKey || ev.ctrlKey || ev.metaKey) return;
+    if (ev.target.closest && ev.target.closest('input, textarea, select, [contenteditable]')) return;
+    const r = cf.getBoundingClientRect();
+    if (!(r.top < S.vh * 0.85 && r.bottom > S.vh * 0.15)) return;
+    ev.preventDefault();
+    cfGo(cfActive + (ev.key === 'ArrowRight' ? 1 : -1));
+  });
+
+  let cfResizeT = 0;
+  addEventListener('resize', () => { clearTimeout(cfResizeT); cfResizeT = setTimeout(() => { cfSize(); cfLayout(); }, 80); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { cfSize(); cfLayout(); });
+  cfSize();
+  cfLayout();
 
   // Aparición escalonada de tarjetas y filas al entrar en pantalla
   const rises = [...document.querySelectorAll('[data-rise]')];
